@@ -9,7 +9,7 @@ extract_by_mask(input_grid, ref_grid, res_method = "near")
 \arguments{
 \item{input_grid}{A SpatRaster that will be aligned}
 
-\item{ref_grid}{A SpatRaster or shapefile that serves as a mask for the input grid. #'}
+\item{ref_grid}{A SpatRaster or sf object  that serves as a mask for the input grid. #'}
 
 \item{res_method}{The resampling technique. Defaulting to "near", i.e.,
 nearest neighbour resampling.}

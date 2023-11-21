@@ -2,10 +2,16 @@
 % Please edit documentation in R/crop_data_to_country.R
 \name{crop_data_to_country}
 \alias{crop_data_to_country}
-\title{Title}
+\title{Crop the input raster file to the extent of the country of interest}
 \usage{
-crop_data_to_country(country, years, paths_lu_filenames)
+crop_data_to_country(
+  country,
+  years,
+  paths_lu_filenames,
+  dir_output_files,
+  nc_layer = "lccs_class"
+)
 }
 \description{
-Title
+Crop the input raster file to the extent of the country of interest
 }

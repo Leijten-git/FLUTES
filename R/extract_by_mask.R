@@ -1,7 +1,7 @@
 #' Align an input raster to a pre-specified reference raster
 #'
 #' @param input_grid A SpatRaster that will be aligned
-#' @param ref_grid A SpatRaster or shapefile that serves as a mask for the input grid. #'
+#' @param ref_grid A SpatRaster or sf object  that serves as a mask for the input grid. #'
 #' @param res_method The resampling technique. Defaulting to "near", i.e.,
 #' nearest neighbour resampling.
 #'
@@ -17,7 +17,7 @@ extract_by_mask <- function(input_grid,
 
     cat("\nReference grid is a shapefile. It will be rasterized first...\n")
 
-    ext_ref_grid <- ext(ref_grid)
+    ext_ref_grid <- terra::ext(ref_grid)
 
     ref_grid$polygon <- c(1:nrow(ref_grid))
 
