@@ -8,8 +8,8 @@ regression_analysis <- function(lu_classes,
                                 neigh_values,
                                 lags,
                                 cut_off_year = NULL,
-                                cut_off_val_reg1 = 2.5e2,
-                                cut_off_val_reg2 = 1e2,
+                                cut_off_val_reg1 = 7.5e2,
+                                cut_off_val_reg2 = 2.5e2,
                                 cut_off_val_var = 5e-7){
 
   cat("\nGenerating a panel data frame...\n")
@@ -64,6 +64,13 @@ regression_analysis <- function(lu_classes,
 
   }
 
+  cat("Starting the regression analysis.\n",
+      "The model specification depends on the number of non-emtpy pixels.\n",
+      "Current cut-off values:\n",
+      "Cut-off value 1:", cut_off_val_reg1, "\n",
+      "Cut-off value 2:", cut_off_val_reg2, "\n",
+      "Maximum variance:", cut_off_val_var, "\n")
+
   gen_preds_by_lu_class <- function(lu_class){
 
     panel_data_filter <- panel_data3  %>%
@@ -87,6 +94,7 @@ regression_analysis <- function(lu_classes,
     model_spec <- stats::formula(paste("fraction_lu", "~",
                                        paste("fraction_lu_neigh + ",
                                              paste(lagged_vars, collapse = "+"))))
+
     if(total_n_pop_pixels>cut_off_val_reg1 & var_dep_var >= cut_off_val_var){
 
       suppressWarnings(model_result <- plm::plm(model_spec,
@@ -98,10 +106,8 @@ regression_analysis <- function(lu_classes,
               total_n_pop_pixels>cut_off_val_reg2 &
               var_dep_var >= cut_off_val_var){
 
-      suppressWarnings(model_result <- plm::plm(model_spec,
-                                                index=c("id"),
-                                                data = panel_data_filter,
-                                                model = "within"))
+      suppressWarnings(model_result <- stats::lm(model_spec,
+                                                data = panel_data_filter))
 
     } else {
 
@@ -137,10 +143,16 @@ regression_analysis <- function(lu_classes,
   fitted_vals_scaled <- sapply(X = lu_classes,
                                FUN = gen_preds_by_lu_class)
 
-  cat("\nWriting the fitted values...\n")
-  saveRDS(fitted_vals_scaled, "fitted_vals_scaled.Rds")
+  years <- panel_data3$Year[c(1:nrow(fitted_vals_scaled))]
+  last_year <- last(unique(years))
+  inds_last_year <- which(years==last_year)
 
-  return(fitted_vals_scaled)
+  fitted_vals_scaled2 <- fitted_vals_scaled[inds_last_year,]
+
+  cat("\nWriting the fitted values...\n")
+  saveRDS(fitted_vals_scaled2, "fitted_vals_scaled.Rds")
+
+  return(fitted_vals_scaled2)
 
 
 }

@@ -10,7 +10,7 @@ gen_fract_lu_matrices <- function(country,
                                   dir_output_files,
                                   path_lu_legend_filename,
                                   vals_lu_classes_to_exclude = NULL,
-                                  no_unfilled_cells = T){
+                                  no_unfilled_cells = F){
 
   cat("\nGenerating the fractional land use matrices over time based on the cropped land cover maps\n")
 

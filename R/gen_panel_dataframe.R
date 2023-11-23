@@ -1,4 +1,5 @@
-gen_panel_dataframe <- function(years,
+gen_panel_dataframe <- function(mask,
+                                years,
                                 aggregation_factor,
                                 cut_off_year = NULL){
 
@@ -30,6 +31,9 @@ gen_panel_dataframe <- function(years,
 
   lu_frac_matrices_df <- do.call(cbind, lu_frac_matrices_list) %>%
     as.data.frame()
+
+  inds_outside_mask <- which(is.na(terra::values(mask)))
+  lu_frac_matrices_df = lu_frac_matrices_df[-inds_outside_mask,]
 
   lu_frac_matrices_long <- lu_frac_matrices_df %>%
     mutate(id = row_number()) %>%

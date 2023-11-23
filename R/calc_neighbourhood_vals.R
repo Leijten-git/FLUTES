@@ -21,6 +21,10 @@ calc_neighbourhood_vals <- function(index,
   cat("\nNow calculating the neighbourhood weights for year:", names(lu_list)[[index]], "\n")
 
   lu <- lu_list[[index]]
+
+  inds_outside_mask <- which(is.na(terra::values(mask)))
+  lu = lu[-inds_outside_mask,]
+
   neigh_cols <- neigh_cols_list[[index]]
 
   neigh_values <- lu[,neigh_cols]

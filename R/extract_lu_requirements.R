@@ -1,3 +1,14 @@
+#' Extracting land use requirments
+#'
+#' @param lu_frac_matrices_list
+#' @param lu_classes
+#' @param years
+#' @param path
+#'
+#' @return
+#' @export
+#'
+#' @examples
 extract_lu_requirements <- function(lu_frac_matrices_list,
                                     lu_classes,
                                     years,
@@ -11,21 +22,24 @@ extract_lu_requirements <- function(lu_frac_matrices_list,
   class_supply <- colSums(lu)
 
   years_sorted <- sort(years)[1]:tail(sort(years),1)
+  rm(years)
+
   demand <- matrix(NA, nrow = length(years_sorted), ncol = n_lu_classes + 2)
-  demand[,1] <- years
+  demand[,1] <- years_sorted
 
-  obs_ind <- which(demand[,1] %in% years)
+  obs_ind <- which(demand[,1] %in% years_sorted)
 
-  period <- paste0(as.character(c(first(years), last(years))), collapse = ":")
+  period <- paste0(as.character(c(first(years_sorted), last(years_sorted))),
+                   collapse = ":")
 
   if(!is.null(path)){
 
-    cat("\nWriting the land use requiremenyears for the total simulation period (i.e.,", period, ") ",
+    cat("\nWriting the land use requirements for the total simulation period (i.e.,", period, ") ",
         "in the output working directory:\n", path, "\n", sep = "")
 
   }
 
-  for(year in years){
+  for(year in years_sorted){
 
     class_supply_year <- class_supply[grep(year, colnames(lu))]
 
@@ -52,7 +66,7 @@ extract_lu_requirements <- function(lu_frac_matrices_list,
   }
 
   for(i in 1:n_lu_classes){
-    demand[, i + 1] <- stats::approx(demand[,1], demand[,i + 1], xout = years)$y
+    demand[, i + 1] <- stats::approx(demand[,1], demand[,i + 1], xout = years_sorted)$y
   }
 
   demand[, n_lu_classes + 2] <- rowSums(demand[,-1], na.rm = TRUE)
