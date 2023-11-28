@@ -5,11 +5,18 @@
 \title{Title}
 \usage{
 regression_analysis(
-  lu_classes = lu_classes,
-  neigh_values = neighbourhood_output_matrices_df,
-  lags = c(1),
-  cut_off_val_reg1 = 200,
-  cut_off_val_reg2 = 50
+  lu_matrices,
+  lu_classes,
+  neigh_values,
+  lags,
+  cut_off_year = NULL,
+  min_n_pixels1 = 700,
+  min_n_pixels2 = 400,
+  min_n_pixels3 = 50,
+  min_area1 = 500,
+  min_area2 = 250,
+  min_area3 = 150,
+  cut_off_val_var = 5e-07
 )
 }
 \description{

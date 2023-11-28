@@ -1,28 +1,47 @@
 #' Title
+#'
+#' @param lu_matrices
+#' @param neigh_values
+#' @param lags
+#' @param cut_off_year
+#' @param min_n_pixels1
+#' @param min_n_pixels2
+#' @param min_n_pixels3
+#' @param min_area1
+#' @param min_area2
+#' @param min_area3
+#' @param cut_off_val_var
+#' @param lu_classes
+#'
 #' @import dplyr
 #' @return
 #' @export
 #'
 #' @examples
-regression_analysis <- function(lu_classes,
+regression_analysis <- function(lu_matrices,
                                 neigh_values,
+                                lu_classes,
+
                                 lags,
                                 cut_off_year = NULL,
-                                cut_off_val_reg1 = 7.5e2,
-                                cut_off_val_reg2 = 2.5e2,
+                                min_n_pixels1 = 7e2,
+                                min_n_pixels2 = 4e2,
+                                min_n_pixels3 = 5e1,
+
+                                min_area1 = 5e2,
+                                min_area2 = 2.5e2,
+                                min_area3 = 1.5e2,
+
                                 cut_off_val_var = 5e-7){
 
   cat("\nGenerating a panel data frame...\n")
-
-  lu_frac_matrices_long <- gen_panel_dataframe(years = years,
-                                               aggregation_factor = 16)
 
   neigh_values_long <- neigh_values %>%
     as.data.frame() %>%
     mutate(id = row_number()) %>%
     tidyr::gather(key = "year_and_land_class", value = "value_neigh", -id)
 
-  panel_data <- lu_frac_matrices_long %>%
+  panel_data <- lu_matrices %>%
     cbind(neigh_values_long %>%
             dplyr::select(value_neigh))
 
@@ -67,8 +86,8 @@ regression_analysis <- function(lu_classes,
   cat("Starting the regression analysis.\n",
       "The model specification depends on the number of non-emtpy pixels.\n",
       "Current cut-off values:\n",
-      "Cut-off value 1:", cut_off_val_reg1, "\n",
-      "Cut-off value 2:", cut_off_val_reg2, "\n",
+      "Cut-off value 1:", min_n_pixels1, "\n",
+      "Cut-off value 2:", min_n_pixels2, "\n",
       "Maximum variance:", cut_off_val_var, "\n")
 
   gen_preds_by_lu_class <- function(lu_class){
@@ -77,8 +96,22 @@ regression_analysis <- function(lu_classes,
       filter(`Land class` == lu_class) %>%
       dplyr::select(-`Land class`)
 
-    total_area = sum(panel_data_filter$fraction_lu)
-    total_n_pop_pixels <- sum(panel_data_filter$fraction_lu>0)
+    n_pixels <- length(unique(panel_data_filter$id))
+
+    mean_populated_area <- panel_data_filter %>%
+      group_by(id) %>%
+      summarize(mean_fraction = mean(fraction_lu, na.rm = T)) %>%
+      ungroup() %>%
+      summarize(sum = sum(mean_fraction)) %>%
+      pull()
+
+    total_n_pop_pixels <- panel_data_filter %>%
+      group_by(id) %>%
+      summarize(sum = mean(fraction_lu, na.rm = T)) %>%
+      ungroup() %>%
+      filter(sum>0) %>%
+      nrow()
+
     var_dep_var <- var(panel_data_filter$fraction_lu)
 
     vars <- colnames(panel_data_filter)
@@ -88,30 +121,40 @@ regression_analysis <- function(lu_classes,
         lu_class,
         "\n",
         "Number of non-empty pixels:", total_n_pop_pixels, "\n",
-        "Total area:", total_area, "\n",
+        "Time-averaged populated area:", mean_populated_area, "\n",
         "Variance:", var_dep_var, "\n")
 
     model_spec <- stats::formula(paste("fraction_lu", "~",
                                        paste("fraction_lu_neigh + ",
                                              paste(lagged_vars, collapse = "+"))))
 
-    if(total_n_pop_pixels>cut_off_val_reg1 & var_dep_var >= cut_off_val_var){
+    if(total_n_pop_pixels>min_n_pixels1 &
+       mean_populated_area > min_area1 &
+       var_dep_var >= cut_off_val_var){
 
       suppressWarnings(model_result <- plm::plm(model_spec,
                                                 index=c("id", "Year"),
                                                 data = panel_data_filter,
                                                 model = "within"))
 
-    } else if(total_n_pop_pixels<=cut_off_val_reg1 &
-              total_n_pop_pixels>cut_off_val_reg2 &
+    } else if(total_n_pop_pixels<=min_n_pixels1 &
+              total_n_pop_pixels>min_n_pixels2 &
+
+              mean_populated_area <= min_area1 &
+              mean_populated_area > min_area2 &
+
               var_dep_var >= cut_off_val_var){
 
-      suppressWarnings(model_result <- stats::lm(model_spec,
-                                                data = panel_data_filter))
+      suppressWarnings(model_result <- plm::plm(model_spec,
+                                                index=c("id"),
+                                                data = panel_data_filter,
+                                                model = "within"))
 
     } else {
 
-      if(length(lagged_vars)>0){
+      if(length(lagged_vars)>0 &
+         total_n_pop_pixels>min_n_pixels3 &
+         mean_populated_area>min_area3){
 
         first_lagged_var <- lagged_vars[1]
         xsym <- rlang::ensym(first_lagged_var)
@@ -121,7 +164,7 @@ regression_analysis <- function(lu_classes,
 
       } else {
 
-        model_result <- lm(fraction_lu ~ 1, data = panel_data_filter)
+        model_result <- stats::lm(fraction_lu ~ 1, data = panel_data_filter)
 
       }
 

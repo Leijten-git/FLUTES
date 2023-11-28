@@ -1,4 +1,13 @@
 #' Generate fractional land use matrices over time based on the cropped land cover maps
+#'
+#' @param country
+#' @param years
+#' @param aggregation_factor
+#' @param dir_output_files
+#' @param path_lu_legend_filename
+#' @param vals_lu_classes_to_exclude
+#' @param no_unfilled_cells
+#'
 #' @import dplyr
 #' @return
 #' @export
@@ -33,7 +42,10 @@ gen_fract_lu_matrices <- function(country,
     if(!is.null(vals_lu_classes_to_exclude)){
 
       for(value in vals_lu_classes_to_exclude){
+
+        cat("Excluding pixels with value:", value, "\n")
         input_map[input_map==value] <- NA
+        cat("test")
       }
 
     }
@@ -51,10 +63,13 @@ gen_fract_lu_matrices <- function(country,
 
       count <- which(unique_vals==index)
 
-      cat("Creating a separate raster for land use class:", lu_classes[count], "\n")
+      cat("Creating a separate raster for land use class:",
+          lu_classes[count],
+          "\n")
 
       input_map[input_map!=index] <- NA
       input_map[input_map==index] <- 1
+
       return(input_map)
 
     }
@@ -73,7 +88,7 @@ gen_fract_lu_matrices <- function(country,
     input_maps_frac <- input_maps_aggregated %>%
       terra::app(function(x) x / fractional_scalar)
 
-    specify_output_dir(dir_output_files = base_dir,
+    specify_output_dir(dir_output_files = dir_output_files,
                        aoi = country,
                        aggregation_factor = aggregation_factor)
 
@@ -119,6 +134,52 @@ gen_fract_lu_matrices <- function(country,
   lu_frac_matrices_list <- lapply(X = lu_raster_stack,
                                   FUN = convert_map_into_fractional_lu_matrix)
 
+  lu_classes <- identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list)
+
+  names(lu_frac_matrices_list) <- sort(years)
+
+  add_missing_lu_classes <- function(year){
+
+    lu_matrix <- lu_frac_matrices_list[[as.character(year)]]
+    unique_lu_classes_year <- unique(sub('.*_', '', colnames(lu_matrix)))
+
+    missing_lu_classes_indices <- which(!lu_classes %in% unique_lu_classes_year)
+
+    if(length(missing_lu_classes_indices)>0){
+
+      year_char <- as.character(year)
+
+      missing_lu_classes <- lu_classes[missing_lu_classes_indices]
+      new_col_names <- paste0(year_char, "_", missing_lu_classes)
+      order_col_names <- paste0(year_char, "_", lu_classes)
+
+      for(new_col_name in new_col_names){
+
+        cat("In year", year, "the following land use classes were missing:",
+            new_col_name, "\nAn empty column has been added\n")
+        warning("In year ", year, " the following land use classes were missing: ",
+                new_col_name, "\nAn empty column has been added\n")
+
+        lu_matrix <- lu_matrix %>%
+          as.data.frame() %>%
+          mutate(!!new_col_name := 0)
+
+      }
+
+      lu_matrix <- lu_matrix %>%
+        dplyr::select(all_of(order_col_names)) %>%
+        as.matrix()
+
+    }
+
+    return(lu_matrix)
+
+  }
+
+  lu_frac_matrices_list <- lapply(X = sort(years),
+                                  FUN = add_missing_lu_classes)
+
+
   period <- paste0(c(as.character(first(sort(years))),
                      "-",
                      as.character(last(sort(years)))), collapse = "")
@@ -132,7 +193,6 @@ gen_fract_lu_matrices <- function(country,
   cat("\nWriting the fractional land use matrices here:\n",
       getwd(), "\n")
 
-  names(lu_frac_matrices_list) <- sort(years)
   saveRDS(lu_frac_matrices_list, filename_lu_frac_matrices)
 
   return(lu_frac_matrices_list)

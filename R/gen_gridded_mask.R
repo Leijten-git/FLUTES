@@ -32,6 +32,8 @@ gen_gridded_mask <- function(country,
   terra::values(mask) <- NA
   terra::values(mask)[is_nonNA_mask] <- 1
 
+  cat("\nGenerated a mask for:", country_name, "\n")
+
   return(mask)
 
 

@@ -11,7 +11,7 @@ gen_fract_lu_matrices(
   dir_output_files,
   path_lu_legend_filename,
   vals_lu_classes_to_exclude = NULL,
-  no_unfilled_cells = T
+  no_unfilled_cells = F
 )
 }
 \description{

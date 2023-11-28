@@ -1,7 +1,6 @@
 #' Extracting land use requirments
 #'
 #' @param lu_frac_matrices_list
-#' @param lu_classes
 #' @param years
 #' @param path
 #'
@@ -10,9 +9,10 @@
 #'
 #' @examples
 extract_lu_requirements <- function(lu_frac_matrices_list,
-                                    lu_classes,
                                     years,
                                     path = paste0(getwd(), "/land_use_requirements.Rds")){
+
+  lu_classes <- identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list)
 
   names(lu_frac_matrices_list) <- NULL
   lu <- do.call(cbind.data.frame, lu_frac_matrices_list)
@@ -43,23 +43,22 @@ extract_lu_requirements <- function(lu_frac_matrices_list,
 
     class_supply_year <- class_supply[grep(year, colnames(lu))]
 
-    if(length(class_supply_year)<n_lu_classes){
-
-      warning("Number of land systems varies across years. See:\n",
-              path, "\n")
-
-      class_supply_year_df <- data.frame(lu_class = names(class_supply_year),
-                                         supply = as.numeric(class_supply_year))
-
-      class_supply_year_complete_df <- data.frame(lu_class = paste0(year, "_", lu_classes)) %>%
-        merge(class_supply_year_df,
-              by = "lu_class",
-              all.x = T) %>%
-        mutate(supply = coalesce(supply, 0))
-
-      class_supply_year <- class_supply_year_complete_df$supply
-
-    }
+    # if(length(class_supply_year)<n_lu_classes){
+    #
+    #   class_supply_year_df <- data.frame(lu_class = names(class_supply_year),
+    #                                      supply = as.numeric(class_supply_year))
+    #
+    #   class_supply_year_complete_df <- data.frame(lu_class = paste0(year, "_", lu_classes)) %>%
+    #     mutate(order = c(1:length(lu_classes))) %>%
+    #     merge(class_supply_year_df,
+    #           by = "lu_class",
+    #           all.x = T) %>%
+    #     mutate(supply = coalesce(supply, 0)) %>%
+    #     arrange(order)
+    #
+    #   class_supply_year <- class_supply_year_complete_df$supply
+    #
+    # }
 
     demand[which(demand[,1]==year), 2:(n_lu_classes+1)] <- class_supply_year
 

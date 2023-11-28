@@ -1,3 +1,19 @@
+#' Title
+#'
+#' @param lu
+#' @param sm
+#' @param params
+#' @param dmd
+#' @param ln
+#' @param constraint
+#' @param rescale
+#' @param PA
+#' @param output_dir
+#'
+#' @return
+#' @export
+#'
+#' @examples
 lu_allocation <- function(lu,
                           sm,
                           params,
@@ -6,12 +22,12 @@ lu_allocation <- function(lu,
                           constraint,
                           rescale,
                           PA,
-                          adjust_dev_pars = T){
+                          output_dir = NULL){
 
   cat('\nStarting simulations...\n')
 
   #number of land use classes and number of cells
-  K <- ncol(lu) # FL: number of land systems
+  K <- ncol(lu) # FL: number of land use classes
   n <- nrow(lu) # FL: number of pixels
 
   is_absolute_dev <- params$is_abs_dev
@@ -30,24 +46,24 @@ lu_allocation <- function(lu,
 
   }
 
-  max_devs <<- params$max_devs # FL: should be flexible, depending on the demand variable
+  max_devs <<- params$max_devs
   max_iter <<- params$max_iter
   growth <- params$growth
   no_change <-  1:K%in%params$no_change
 
   cat("Maximum deviation tolerance thresholds:", max_devs)
 
-  supply_t0 <- colSums(lu) # FL: count pixels by land system in the initial situation
+  supply_t0 <- colSums(lu) # FL: count area by lu class in the initial situation
 
-  demand_t1 <- dmd[2,] # FL: extract required pixels next sim period
+  demand_t1 <- dmd[2,] # FL: extract required areas next sim period
 
-  # Land use supply in the first time stepis the "candidate" that will be recalculated
+  # Land use supply in the first time step is the "candidate" that will be recalculated
   # in each iteration until it meets demand_t1. For now, it's equal to supply_t0
   supply_t1_candidate <- dmd[1,]
 
   # supply_t0 == supply_t1_candidate # TRUE FOR ALL CASES (for now)
 
-  #First land use map becomes "candidate" on which allocations take place on an iterative basis
+  # First land use map becomes "candidate" on which allocations take place on an iterative basis
   p_t1_candidate <- lu # FL: fractions current LU
   # note: p_t1_candidate will output the final projections!
 
@@ -200,14 +216,14 @@ lu_allocation <- function(lu,
       demand_change <- demand_change - supply_t0_pa # exclude the areas within the protected mask
     }
 
-    #Calculate change factor (a),by how much do we have to multiply the candidate
+    # Calculate change factor (a),by how much do we have to multiply the candidate
     # land use proportions to satisfy the modelled suitability.
 
     # FL: 'ideal change' represents the "change factors" shown in figure 2 of the
     # main paper. It's based on the ratio of the predicted fraction to the actual
     # fraction
 
-    ideal_change <- sm / p_t1_candidate # FL: divide suitability estimates by current fractions
+    ideal_change <- sm / p_t1_candidate # FL: scale suitability estimates by current fractions
 
     both_0 <- is.na(ideal_change) # FL: identify cells where both suitability and actual fraction is 0.
     ideal_change[both_0] <- 1 # FL: in case where both are 0, assume no change (so set change factors to 1)
@@ -225,6 +241,7 @@ lu_allocation <- function(lu,
     # this ensures that all suitabilities sum to 1
 
     # Put differently, we scale the ideal changes by the inverse total ideal changes!
+    # this ensures that all columns of the relative suitability estimates sum to 1.
 
     #Allocate demand change between pixels (d)
     target_lu_change_pixel <-  rel_suitability %*% diag(demand_change)
@@ -295,55 +312,6 @@ lu_allocation <- function(lu,
 
     final_count <<- count
 
-    if(adjust_dev_pars == T){
-
-      first_cut_off_value <- round(max_iter*0.25)
-      second_cut_off_value <- round(max_iter*0.5)
-      third_cut_off_value <- round(max_iter*0.75)
-
-      if(max_iter > 5){
-
-        if(count == first_cut_off_value){
-
-          cat("\nNo solution found after", count, "iterations.")
-
-          max_devs[which(dev_diffs > max_devs)] <- max_devs[which(dev_diffs > max_devs)]+2
-
-          cat("\nIncreased the maximum deviance tolerance parameters to:\n")
-
-          cat(paste0(max_devs, collapse = " "))
-
-          cat("\n")
-
-        } else if(count == second_cut_off_value){
-
-          cat("\nNo solution found after", count, "iterations.")
-
-          max_devs[which(dev_diffs > max_devs)] <- max_devs[which(dev_diffs > max_devs)]+8
-
-          cat("\nIncreased the maximum deviance tolerance parameters to:\n")
-
-          cat(paste0(max_devs, collapse = " "))
-
-          cat("\n")
-
-        } else if(count == third_cut_off_value){
-
-          cat("\nNo solution found after", count, "iterations.")
-
-          max_devs[which(dev_diffs > max_devs)] <- round(dev_diffs[which(dev_diffs > max_devs)]+1)
-
-          cat("\nIncreased the maximum deviance tolerance parameters to:\n")
-
-          cat(paste0(max_devs, collapse = " "))
-
-          cat("\n")
-        }
-
-      }
-
-    }
-
     if (count == max_iter){
 
       stop("\nMaximum iterations reached")
@@ -354,6 +322,12 @@ lu_allocation <- function(lu,
 
   cat("\nSaving number of iterations...\n")
 
+  if(!is.null(output_dir)){
+    cat("\nModel results will be saved here:", output_dir, "\n")
+    setwd(output_dir)
+  }
+
+  cat("\nWriting the number of iterations...\n")
   saveRDS(final_count, "n_iterations.Rds")
 
   # end while loop ----------------------------------------------------------
@@ -375,7 +349,11 @@ lu_allocation <- function(lu,
   final_dev_diffs_perc <- final_dev_diffs/demand_t1 * 100
   final_dev_diffs_perc[which(is.na(final_dev_diffs_perc))] <- 0
 
-  cat("\nWriting the deviation values")
+  cat("\nWriting the deviation values...\n")
+
+  if(!is.null(output_dir)){
+    setwd(output_dir)
+  }
 
   saveRDS(data.frame(final_dev_diffs = final_dev_diffs,
                      final_dev_diffs_perc = as.numeric(final_dev_diffs_perc)),

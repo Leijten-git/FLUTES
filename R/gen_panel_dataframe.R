@@ -1,9 +1,24 @@
-gen_panel_dataframe <- function(mask,
-                                years,
+#' Title
+#'
+#' @param years
+#' @param lu_matrices
+#' @param dir_output_files
+#' @param country
+#' @param aggregation_factor
+#' @param cut_off_year
+#'
+#' @return
+#' @export
+#'
+#' @examples
+gen_panel_dataframe <- function(years,
+                                lu_matrices,
+                                dir_output_files,
+                                country,
                                 aggregation_factor,
                                 cut_off_year = NULL){
 
-  if(!exists("lu_frac_matrices_list")){
+  if(!exists("lu_matrices")){
 
     cat("\nConverting the fractional land use matrices into long format...\n")
 
@@ -24,16 +39,13 @@ gen_panel_dataframe <- function(mask,
                                        folder_agg_factor,
                                        filename_lu_frac_matrices)
 
-    lu_frac_matrices_list <- readRDS(path_lu_frac_matrices)
+    lu_matrices <- readRDS(path_lu_frac_matrices)
 
 
   }
 
-  lu_frac_matrices_df <- do.call(cbind, lu_frac_matrices_list) %>%
+  lu_frac_matrices_df <- do.call(cbind, lu_matrices) %>%
     as.data.frame()
-
-  inds_outside_mask <- which(is.na(terra::values(mask)))
-  lu_frac_matrices_df = lu_frac_matrices_df[-inds_outside_mask,]
 
   lu_frac_matrices_long <- lu_frac_matrices_df %>%
     mutate(id = row_number()) %>%

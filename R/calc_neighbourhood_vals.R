@@ -22,8 +22,8 @@ calc_neighbourhood_vals <- function(index,
 
   lu <- lu_list[[index]]
 
-  inds_outside_mask <- which(is.na(terra::values(mask)))
-  lu = lu[-inds_outside_mask,]
+  # inds_outside_mask <- which(is.na(terra::values(mask)))
+  # lu = lu[-inds_outside_mask,]
 
   neigh_cols <- neigh_cols_list[[index]]
 
