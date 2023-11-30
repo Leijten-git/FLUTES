@@ -9,6 +9,7 @@
 #'
 #' @examples
 gen_gridded_mask <- function(country,
+                             years,
                              paths_lu_filenames,
                              dir_output_files){
 
@@ -16,14 +17,22 @@ gen_gridded_mask <- function(country,
 
   cat("\nGenerating a mask for:", country_name, "\n")
 
-  files <- list.files()
+  filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
+  first_year <- sort(years)[1]
 
-  if(!"initial_fractional_grids.tif" %in% files){
+  filename_ind_first_cropped_lu_map <- grep(as.character(first_year),
+                                            filenames_cropped_lu_maps)
+
+  filename_first_cropped_lu_map <-
+    filenames_cropped_lu_maps[filename_ind_first_cropped_lu_map]
+
+  if(length(filename_first_cropped_lu_map)==0){
     stop("The initial fractional grids haven't been created yet.",
          "You need to run `gen_fract_lu_matrices` before you can extract the indices.")
   }
 
-  mask <- terra::rast("initial_fractional_grids.tif")
+  mask <- terra::rast(filename_first_cropped_lu_map)
+
   if(terra::nlyr(mask)>1){
     mask <- terra::app(mask, fun = sum,  na.rm = T)
   }
@@ -31,8 +40,6 @@ gen_gridded_mask <- function(country,
   is_nonNA_mask <- which(!is.na(terra::values(mask)))
   terra::values(mask) <- NA
   terra::values(mask)[is_nonNA_mask] <- 1
-
-  cat("\nGenerated a mask for:", country_name, "\n")
 
   return(mask)
 

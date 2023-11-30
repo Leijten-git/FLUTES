@@ -225,7 +225,7 @@ lu_allocation <- function(lu,
 
     ideal_change <- sm / p_t1_candidate # FL: scale suitability estimates by current fractions
 
-    both_0 <- is.na(ideal_change) # FL: identify cells where both suitability and actual fraction is 0.
+    both_0 <- is.na(ideal_change) # FL: identify cells where both suitability and actual fraction is 0. (in R 0/0 is NaN)
     ideal_change[both_0] <- 1 # FL: in case where both are 0, assume no change (so set change factors to 1)
 
     cand_0 <- !is.finite(ideal_change) #This determines which cells are INF in p_t1_candidate
@@ -273,6 +273,10 @@ lu_allocation <- function(lu,
 
       for(i in (1:K)){
         p_t1_proposal[inds_list[[i]], i] <- 0
+
+        both_0 <- is.na(p_t1_proposal) # FL: identify cells where both suitability and actual fraction is 0. (in R 0/0 is NaN)
+        p_t1_proposal[both_0] <- 0 # FL: in case where both are 0, assume no change (so set change factors to 1)
+
       }
 
     }
@@ -320,6 +324,8 @@ lu_allocation <- function(lu,
 
   }
 
+  # end while loop ----------------------------------------------------------
+
   cat("\nSaving number of iterations...\n")
 
   if(!is.null(output_dir)){
@@ -329,8 +335,6 @@ lu_allocation <- function(lu,
 
   cat("\nWriting the number of iterations...\n")
   saveRDS(final_count, "n_iterations.Rds")
-
-  # end while loop ----------------------------------------------------------
 
   #When allocations are ready, return result
   if(PA == T){

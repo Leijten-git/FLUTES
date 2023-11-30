@@ -19,7 +19,7 @@ gen_fract_lu_matrices <- function(country,
                                   dir_output_files,
                                   path_lu_legend_filename,
                                   vals_lu_classes_to_exclude = NULL,
-                                  no_unfilled_cells = F){
+                                  no_unfilled_cells = T){
 
   cat("\nGenerating the fractional land use matrices over time based on the cropped land cover maps\n")
 
@@ -45,7 +45,7 @@ gen_fract_lu_matrices <- function(country,
 
         cat("Excluding pixels with value:", value, "\n")
         input_map[input_map==value] <- NA
-        cat("test")
+
       }
 
     }
@@ -93,7 +93,7 @@ gen_fract_lu_matrices <- function(country,
                        aggregation_factor = aggregation_factor)
 
     terra::writeRaster(input_maps_frac,
-                       "initial_fractional_grids.tif",
+                       names(input_map),
                        overwrite = T)
 
     names(input_maps_frac) <- lu_classes
@@ -107,11 +107,28 @@ gen_fract_lu_matrices <- function(country,
 
       cat("\nRecaling all cells to ensure the fractions sum up to 1\n")
 
-      rowsums <- rowSums(lu_frac_matrix, na.rm = T)
-      inds_empty_cells <- which(rowsums==0)
+      filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
+      first_year <- sort(years)[1]
 
-      if(length(inds_empty_cells)>0){
-        lu_frac_matrix = lu_frac_matrix[-inds_empty_cells,]
+      filename_ind_first_cropped_lu_map <- grep(as.character(first_year),
+                                             filenames_cropped_lu_maps)
+
+      filename_first_cropped_lu_map <-
+        filenames_cropped_lu_maps[filename_ind_first_cropped_lu_map]
+
+      first_cropped_lu_map <- terra::rast(filename_first_cropped_lu_map)
+
+      if(terra::nlyr(first_cropped_lu_map)>1){
+
+        first_cropped_lu_map <- terra::app(first_cropped_lu_map, fun = sum,
+                                           na.rm = T)
+      }
+
+      inds_NA_vals <- which(is.na(terra::values(first_cropped_lu_map)))
+      #inds_non_NA_vals <- which(!is.na(terra::values(first_cropped_lu_map)))
+
+      if(length(inds_NA_vals)>0){
+        lu_frac_matrix = lu_frac_matrix[-inds_NA_vals,]
       }
 
       rowsums2 <- rowSums(lu_frac_matrix, na.rm = T)
@@ -179,7 +196,6 @@ gen_fract_lu_matrices <- function(country,
   lu_frac_matrices_list <- lapply(X = sort(years),
                                   FUN = add_missing_lu_classes)
 
-
   period <- paste0(c(as.character(first(sort(years))),
                      "-",
                      as.character(last(sort(years)))), collapse = "")
@@ -192,6 +208,8 @@ gen_fract_lu_matrices <- function(country,
 
   cat("\nWriting the fractional land use matrices here:\n",
       getwd(), "\n")
+
+  names(lu_frac_matrices_list) <- sort(years)
 
   saveRDS(lu_frac_matrices_list, filename_lu_frac_matrices)
 

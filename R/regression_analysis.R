@@ -30,7 +30,7 @@ regression_analysis <- function(lu_matrices,
 
                                 min_area1 = 5e2,
                                 min_area2 = 2.5e2,
-                                min_area3 = 1.5e2,
+                                min_area3 = 10,
 
                                 cut_off_val_var = 5e-7){
 
@@ -90,6 +90,10 @@ regression_analysis <- function(lu_matrices,
       "Cut-off value 2:", min_n_pixels2, "\n",
       "Maximum variance:", cut_off_val_var, "\n")
 
+  saveRDS(data.frame(lu_class = NA,
+                     r2 = NA),
+          "r2_scores.Rds")
+
   gen_preds_by_lu_class <- function(lu_class){
 
     panel_data_filter <- panel_data3  %>%
@@ -137,6 +141,8 @@ regression_analysis <- function(lu_matrices,
                                                 data = panel_data_filter,
                                                 model = "within"))
 
+      r2 <- as.numeric(summary(model_result)$r.squared[1])
+
     } else if(total_n_pop_pixels<=min_n_pixels1 &
               total_n_pop_pixels>min_n_pixels2 &
 
@@ -150,6 +156,8 @@ regression_analysis <- function(lu_matrices,
                                                 data = panel_data_filter,
                                                 model = "within"))
 
+      r2 <- as.numeric(summary(model_result)$r.squared[1])
+
     } else {
 
       if(length(lagged_vars)>0 &
@@ -162,13 +170,33 @@ regression_analysis <- function(lu_matrices,
         model_result <- rlang::inject(stats::lm(fraction_lu ~ !!xsym,
                                                 data = panel_data_filter))
 
+        r2 <- summary(model_result)$r.squared
+
       } else {
 
+        warning("There are not enough non-empty pixels to estimate a model with",
+                "predictor variables for land use class: ", lu_class, ".\n",
+                "Instead, a linear intercept-only model has been estimated.",
+                "Note that this results in a r-squared of 0.\n",
+                "Consider changing the minimum threshold values.",
+                "\n\nCurrent settings:\n",
+                "Minimum number of pixels: ", min_n_pixels3, "\n",
+                "Average fraction: ", mean_populated_area)
+
         model_result <- stats::lm(fraction_lu ~ 1, data = panel_data_filter)
+        r2 <- summary(model_result)$r.squared
 
       }
 
     }
+
+    cat("\nR-sqaured value:", r2, "\n")
+
+    readRDS("r2_scores.Rds") %>%
+      rbind(data.frame(lu_class = lu_class,
+                       r2 = r2)) %>%
+      na.omit() %>%
+      saveRDS("r2_scores.Rds")
 
     fitted_vals = model_result %>%
       stats::predict()
@@ -177,7 +205,11 @@ regression_analysis <- function(lu_matrices,
       return((x- min(x)) /(max(x)-min(x)))
     }
 
-    fitted_vals_scaled <- normalize(as.numeric(fitted_vals))
+    if(var(fitted_vals)>0){
+      fitted_vals_scaled <- normalize(as.numeric(fitted_vals))
+    } else {
+      fitted_vals_scaled <- fitted_vals
+    }
 
     return(fitted_vals_scaled)
 
