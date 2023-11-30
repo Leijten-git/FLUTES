@@ -175,13 +175,13 @@ regression_analysis <- function(lu_matrices,
       } else {
 
         warning("There are not enough non-empty pixels to estimate a model with",
-                "predictor variables for land use class: ", lu_class, ".\n",
-                "Instead, a linear intercept-only model has been estimated.",
+                "predictor variables for land use class:\n", lu_class, ".\n",
+                "Instead, a linear intercept-only model has been estimated. ",
                 "Note that this results in a r-squared of 0.\n",
                 "Consider changing the minimum threshold values.",
-                "\n\nCurrent settings:\n",
+                "\nCurrent settings:\n",
                 "Minimum number of pixels: ", min_n_pixels3, "\n",
-                "Average fraction: ", mean_populated_area)
+                "Average fraction: ", mean_populated_area, "\n\n")
 
         model_result <- stats::lm(fraction_lu ~ 1, data = panel_data_filter)
         r2 <- summary(model_result)$r.squared

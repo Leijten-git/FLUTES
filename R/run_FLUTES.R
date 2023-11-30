@@ -77,9 +77,11 @@ run_FLUTES <- function(.country,
                                                  dir_output_files = .dir_output_files,
                                                  country = .country)
 
+    lu_classes = identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list)
+
     fitted_vals_scaled <- regression_analysis(lu_matrices = lu_frac_matrices_long,
                                               neigh_values = neighbourhood_output_matrices_df,
-                                              lu_classes = identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list),
+                                              lu_classes = lu_classes,
                                               cut_off_year = .cut_off_year,
                                               lags = .lags)
 
@@ -104,6 +106,8 @@ run_FLUTES <- function(.country,
       readRDS("neighbourhood_output_matrices_list.Rds")
     lu_requirements <- readRDS("land_use_requirements.Rds")
     fitted_vals_scaled <- readRDS("fitted_vals_scaled.Rds")
+
+    lu_classes = identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list)
 
   }
 
@@ -189,6 +193,83 @@ run_FLUTES <- function(.country,
 
   RMSEs <- calculate_rmse()
 
+  calc_and_write_lambda_scores <- function(lu_class){
+
+    cat("\nNow calculating the lambda scores for land use class:", lu_class, "\n")
+
+    colname_lu_class_orig_year <- paste0(sort(years)[index], "_", lu_class)
+    original_fractions <- c(lu_frac_matrices_list[[index]][,colname])
+
+    predicted_fractions <- fitted_vals_scaled[,lu_class]
+
+    calculate_lambda <- function(fractions){
+
+      n_cells <- length(fractions)
+      scaled_suitability <- fractions*predicted_fractions
+      lambda <- sum(scaled_suitability, na.rm = T)/n_cells
+      return(lambda)
+    }
+
+    original_lambda <- calculate_lambda(fractions = original_fractions)
+    predicted_lambda <- calculate_lambda(fractions = predicted_fractions)
+
+    lambda_scores <- data.frame(land_system = lu_class,
+                                original_lambda = original_lambda,
+                                predicted_lambda = predicted_lambda)
+
+  }
+
+  gen_suit_maps <- function(lu_class){
+
+    cat("\nNow generating a suitability map for land use class:", lu_class, "\n")
+
+    predicted_fractions <- fitted_vals_scaled[,lu_class]
+    inds_mask <- which(!is.na(terra::values(mask)))
+    terra::values(mask)[inds_mask] <- predicted_fractions
+
+    lu_class_name <- gsub(".....", "_", make.names(lu_class), fixed = TRUE)
+    lu_class_name <- gsub("....", "_", lu_class_name, fixed = TRUE)
+    lu_class_name <- gsub("...", "_", lu_class_name, fixed = TRUE)
+    lu_class_name <- gsub("..", "_", lu_class_name, fixed = TRUE)
+    lu_class_name <- gsub(".", "_", lu_class_name, fixed = TRUE)
+
+    lu_class_filename <- paste0("Suit_", lu_class_name, ".tif")
+    lu_class_filename <- gsub("_.", ".", lu_class_filename, fixed = TRUE)
+
+    #lu_class_filename_short <- substr(lu_class_filename, 1, 35)
+
+    specify_output_dir(dir_output_files = .dir_output_files,
+                       aoi = noquote(.country),
+                       aggregation_factor = .aggregation_factor)
+
+    dir.create("suit_maps", showWarnings = F)
+    setwd(paste0(getwd(), "/suit_maps"))
+
+    terra::writeRaster(mask,
+                       paste0("suit_", lu_class_filename, ".tif"),
+                       overwrite = T)
+
+
+  }
+
+  lambda_scores_list <- lapply(X = lu_classes,
+                               FUN = calc_and_write_lambda_scores)
+
+  lambda_scores_df <- do.call(rbind.data.frame, lambda_scores_list)
+
+  sapply(X = lu_classes, FUN = gen_suit_maps)
+
+  dir_model_output <- specify_output_dir(dir_output_files = .dir_output_files,
+                                         aoi = .country,
+                                         aggregation_factor = .aggregation_factor,
+                                         create_sub_folder = T,
+                                         are_conv_pars_perc = !.is_abs_dev,
+                                         growth_par = .growth_constraint,
+                                         are_PAs_excluded = F)
+
+  saveRDS(lambda_scores_df, "lambda_scores.Rds")
+
   return(RMSEs)
+
 
 }
