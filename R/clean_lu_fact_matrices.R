@@ -37,11 +37,14 @@ clean_lu_fact_matrices <- function(matrices_list,
       #   as.numeric(sapply(X = names_unfilled_lu_classes,
       #                     function(x) which(lu_classes_filter %in% x)))
 
-      for(col_index in as.numeric(ind_unfilled_lu_classes)){
-        name_col = colnames(matrices_list[[list_element]])[col_index]
-        cat("\nRemoving:", name_col)
-        matrices_list[[list_element]] <- matrices_list[[list_element]][,-col_index]
-      }
+      # for(col_index in as.numeric(ind_unfilled_lu_classes)){
+      #   name_col = colnames(matrices_list[[list_element]])[col_index]
+      #   cat("\nRemoving:", name_col)
+      #   matrices_list[[list_element]] <- matrices_list[[list_element]][,-col_index]
+      # }
+
+      matrices_list[[list_element]] <- matrices_list[[list_element]][,-ind_unfilled_lu_classes]
+
 
     }
 
