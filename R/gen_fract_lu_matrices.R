@@ -15,6 +15,7 @@
 #' @examples
 gen_fract_lu_matrices <- function(country,
                                   years,
+                                  cut_off_year,
                                   aggregation_factor,
                                   dir_output_files,
                                   path_lu_legend_filename,
@@ -107,25 +108,49 @@ gen_fract_lu_matrices <- function(country,
 
       cat("\nRecaling all cells to ensure the fractions sum up to 1\n")
 
-      filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
-      first_year <- sort(years)[1]
+      setwd(dir_output_files)
+      dir.create("raw_lu_files_by_country", showWarnings = F)
+      setwd(file.path(dir_output_files, "raw_lu_files_by_country"))
+      dir.create(country, showWarnings = F)
+      setwd(file.path(getwd(), country))
 
-      filename_ind_first_cropped_lu_map <- grep(as.character(first_year),
-                                             filenames_cropped_lu_maps)
+      #filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
+      filenames_cropped_lu_maps = intersect(list.files(pattern = "cropped_lu_map"),
+                                            list.files(pattern = ".tif$"))
 
-      filename_first_cropped_lu_map <-
-        filenames_cropped_lu_maps[filename_ind_first_cropped_lu_map]
 
-      first_cropped_lu_map <- terra::rast(filename_first_cropped_lu_map)
+      if(!is.null(cut_off_year)){
 
-      if(terra::nlyr(first_cropped_lu_map)>1){
+        cat("\nUsing the land use map for the year",
+            cut_off_year,
+            "as reference map\n")
 
-        first_cropped_lu_map <- terra::app(first_cropped_lu_map, fun = sum,
-                                           na.rm = T)
+        filename_ind_ref_lu_map <- grep(as.character(cut_off_year),
+                                        filenames_cropped_lu_maps)
+      } else {
+
+        first_year <- sort(years)[1]
+
+        cat("\nUsing the land use map for the year ",
+            first_year,
+            "as reference map")
+
+        filename_ind_ref_lu_map <- grep(as.character(first_year),
+                                        filenames_cropped_lu_maps)
       }
 
-      inds_NA_vals <- which(is.na(terra::values(first_cropped_lu_map)))
-      #inds_non_NA_vals <- which(!is.na(terra::values(first_cropped_lu_map)))
+      filename_ref_cropped_lu_map <-
+        filenames_cropped_lu_maps[filename_ind_ref_lu_map]
+
+      ref_cropped_lu_map <- terra::rast(filename_ref_cropped_lu_map)
+
+      if(terra::nlyr(ref_cropped_lu_map)>1){
+
+        ref_cropped_lu_map <- terra::app(ref_cropped_lu_map, fun = sum,
+                                         na.rm = T)
+      }
+
+      inds_NA_vals <- which(is.na(terra::values(ref_cropped_lu_map)))
 
       if(length(inds_NA_vals)>0){
         lu_frac_matrix = lu_frac_matrix[-inds_NA_vals,]
@@ -158,17 +183,19 @@ gen_fract_lu_matrices <- function(country,
   add_missing_lu_classes <- function(year){
 
     lu_matrix <- lu_frac_matrices_list[[as.character(year)]]
+
     unique_lu_classes_year <- unique(sub('.*_', '', colnames(lu_matrix)))
 
     missing_lu_classes_indices <- which(!lu_classes %in% unique_lu_classes_year)
 
+    year_char <- as.character(year)
+    order_col_names <- paste0(year_char, "_", lu_classes)
+
     if(length(missing_lu_classes_indices)>0){
 
-      year_char <- as.character(year)
 
       missing_lu_classes <- lu_classes[missing_lu_classes_indices]
       new_col_names <- paste0(year_char, "_", missing_lu_classes)
-      order_col_names <- paste0(year_char, "_", lu_classes)
 
       for(new_col_name in new_col_names){
 
@@ -183,18 +210,29 @@ gen_fract_lu_matrices <- function(country,
 
       }
 
-      lu_matrix <- lu_matrix %>%
-        dplyr::select(all_of(order_col_names)) %>%
-        as.matrix()
-
     }
+
+    if(class(lu_matrix)[1]=="matrix"){
+      lu_matrix <- lu_matrix %>%
+        as.data.frame()
+    }
+
+    lu_matrix[is.na(lu_matrix)] <- 0
+    lu_matrix <- lu_matrix %>%
+      dplyr::select(all_of(order_col_names)) %>%
+      as.matrix()
 
     return(lu_matrix)
 
   }
 
-  lu_frac_matrices_list <- lapply(X = sort(years),
-                                  FUN = add_missing_lu_classes)
+  lu_frac_matrices_list2 <- lapply(X = sort(years),
+                                   FUN = add_missing_lu_classes)
+
+  names(lu_frac_matrices_list2) <- sort(years)
+
+  lu_frac_matrices_list3 <- clean_lu_fact_matrices(matrices_list = lu_frac_matrices_list2,
+                                                   cut_off_year = cut_off_year)
 
   period <- paste0(c(as.character(first(sort(years))),
                      "-",
@@ -209,10 +247,8 @@ gen_fract_lu_matrices <- function(country,
   cat("\nWriting the fractional land use matrices here:\n",
       getwd(), "\n")
 
-  names(lu_frac_matrices_list) <- sort(years)
+  saveRDS(lu_frac_matrices_list3, filename_lu_frac_matrices)
 
-  saveRDS(lu_frac_matrices_list, filename_lu_frac_matrices)
-
-  return(lu_frac_matrices_list)
+  return(lu_frac_matrices_list3)
 
 }

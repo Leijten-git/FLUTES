@@ -15,8 +15,8 @@ run_FLUTES <- function(.country,
                        .lags = NULL,
                        .growth_constraint = NULL,
 
-                       .max_dev = 1,
-                       .max_iter = 2e3,
+                       .max_dev = 2,
+                       .max_iter = 5e3,
                        .vals_lu_classes_to_exclude = NULL,
                        .kernel_size = 25,
                        .is_abs_dev = F,
@@ -25,9 +25,6 @@ run_FLUTES <- function(.country,
 
   if(skip_preprocessing == F){
 
-    cat("\nPreprocessing steps are skipped...")
-    warning("Preprocessing steps are skipped...")
-
     crop_data_to_country(country = .country,
                          years = .years,
                          paths_lu_filenames = .paths_lu_filenames,
@@ -35,12 +32,14 @@ run_FLUTES <- function(.country,
 
     lu_frac_matrices_list <- gen_fract_lu_matrices(country = .country,
                                                    years = .years,
+                                                   cut_off_year = .cut_off_year,
                                                    aggregation_factor = .aggregation_factor,
                                                    dir_output_files = .dir_output_files,
                                                    path_lu_legend_filename = .path_lu_legend_filename,
                                                    vals_lu_classes_to_exclude = .vals_lu_classes_to_exclude)
 
     mask <- gen_gridded_mask(country = .country,
+                             cut_off_year = .cut_off_year,
                              years = .years,
                              paths_lu_filenames = .paths_lu_filenames,
                              dir_output_files = .dir_output_files)
@@ -86,6 +85,9 @@ run_FLUTES <- function(.country,
                                               lags = .lags)
 
   } else if(skip_preprocessing == T){
+
+    cat("\nPreprocessing steps are skipped...")
+    warning("Preprocessing steps are skipped...")
 
     specify_output_dir(dir_output_files = .dir_output_files,
                        aoi = noquote(.country),
@@ -198,15 +200,19 @@ run_FLUTES <- function(.country,
     cat("\nNow calculating the lambda scores for land use class:", lu_class, "\n")
 
     colname_lu_class_orig_year <- paste0(sort(years)[index], "_", lu_class)
-    original_fractions <- c(lu_frac_matrices_list[[index]][,colname])
+    original_fractions <- c(lu_frac_matrices_list[[index]][,colname_lu_class_orig_year])
+    predicted_fractions <- c(new_matrix)
 
-    predicted_fractions <- fitted_vals_scaled[,lu_class]
+    suit_scores <- fitted_vals_scaled[,lu_class]
 
     calculate_lambda <- function(fractions){
 
-      n_cells <- length(fractions)
-      scaled_suitability <- fractions*predicted_fractions
-      lambda <- sum(scaled_suitability, na.rm = T)/n_cells
+      #n_cells <- length(fractions)
+      tot_area <- sum(fractions)
+      scaled_suitability <- fractions*suit_scores
+      #lambda <- sum(scaled_suitability, na.rm = T)/n_cells
+      lambda <- sum(scaled_suitability, na.rm = T)/tot_area
+
       return(lambda)
     }
 
@@ -222,6 +228,16 @@ run_FLUTES <- function(.country,
   gen_suit_maps <- function(lu_class){
 
     cat("\nNow generating a suitability map for land use class:", lu_class, "\n")
+
+    specify_output_dir(dir_output_files = .dir_output_files,
+                       aoi = noquote(.country),
+                       aggregation_factor = .aggregation_factor)
+
+    mask <- gen_gridded_mask(country = .country,
+                             cut_off_year = .cut_off_year,
+                             years = .years,
+                             paths_lu_filenames = .paths_lu_filenames,
+                             dir_output_files = .dir_output_files)
 
     predicted_fractions <- fitted_vals_scaled[,lu_class]
     inds_mask <- which(!is.na(terra::values(mask)))
@@ -246,7 +262,7 @@ run_FLUTES <- function(.country,
     setwd(paste0(getwd(), "/suit_maps"))
 
     terra::writeRaster(mask,
-                       paste0("suit_", lu_class_filename, ".tif"),
+                       lu_class_filename,
                        overwrite = T)
 
 

@@ -9,6 +9,7 @@
 #'
 #' @examples
 gen_gridded_mask <- function(country,
+                             cut_off_year,
                              years,
                              paths_lu_filenames,
                              dir_output_files){
@@ -18,10 +19,15 @@ gen_gridded_mask <- function(country,
   cat("\nGenerating a mask for:", country_name, "\n")
 
   filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
-  first_year <- sort(years)[1]
 
-  filename_ind_first_cropped_lu_map <- grep(as.character(first_year),
-                                            filenames_cropped_lu_maps)
+  if(!is.null(cut_off_year)){
+    filename_ind_first_cropped_lu_map <- grep(as.character(cut_off_year),
+                                              filenames_cropped_lu_maps)
+  } else {
+    first_year <- sort(years)[1]
+    filename_ind_first_cropped_lu_map <- grep(as.character(first_year),
+                                              filenames_cropped_lu_maps)
+  }
 
   filename_first_cropped_lu_map <-
     filenames_cropped_lu_maps[filename_ind_first_cropped_lu_map]
