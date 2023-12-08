@@ -106,10 +106,14 @@ gen_fract_lu_matrices <- function(country,
   lu_frac_grids_list <- lapply(X = lu_raster_stack,
                                   FUN = convert_cat_grid_into_fractional_grid)
 
-  convert_map_into_fractional_lu_matrix <- function(input_map_frac){
+  names(lu_frac_grids_list) <- sort(years)
 
-    lu_frac_matrix <- matrix(data = terra::values(input_maps_frac),
-                             ncol = length(names(input_maps_frac)))
+  convert_map_into_fractional_lu_matrix <- function(year){
+
+    input_map_frac <- lu_frac_grids_list[[year]]
+
+    lu_frac_matrix <- matrix(data = terra::values(input_map_frac),
+                             ncol = length(names(input_map_frac)))
 
     lu_frac_matrix[is.na(lu_frac_matrix)] <- 0
 
@@ -170,8 +174,6 @@ gen_fract_lu_matrices <- function(country,
 
     }
 
-    year <- as.numeric(sub(".tif", "", sub('.*_', '', names(input_map))))
-
     colnames(lu_frac_matrix) <- paste0(year, "_", names(input_maps_frac))
 
     return(lu_frac_matrix)
@@ -179,7 +181,7 @@ gen_fract_lu_matrices <- function(country,
 
   }
 
-  lu_frac_matrices_list <- lapply(X = lu_frac_grids_list,
+  lu_frac_matrices_list <- lapply(X = as.character(sort(years)),
                                   FUN = convert_map_into_fractional_lu_matrix)
 
   lu_classes <- identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list)
