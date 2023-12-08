@@ -41,6 +41,7 @@ run_FLUTES <- function(.country,
     mask <- gen_gridded_mask(country = .country,
                              cut_off_year = .cut_off_year,
                              years = .years,
+                             aggregation_factor = .aggregation_factor,
                              paths_lu_filenames = .paths_lu_filenames,
                              dir_output_files = .dir_output_files)
 
@@ -236,6 +237,7 @@ run_FLUTES <- function(.country,
     mask <- gen_gridded_mask(country = .country,
                              cut_off_year = .cut_off_year,
                              years = .years,
+                             aggregation_factor = .aggregation_factor,
                              paths_lu_filenames = .paths_lu_filenames,
                              dir_output_files = .dir_output_files)
 

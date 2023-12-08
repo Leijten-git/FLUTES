@@ -35,7 +35,7 @@ gen_fract_lu_matrices <- function(country,
   lu_raster_stack <- terra::rast(raster_files_filtered_sorted)
   names(lu_raster_stack) <- raster_files_filtered_sorted
 
-  convert_map_into_fractional_lu_matrix <- function(input_map){
+  convert_cat_grid_into_fractional_grid <- function(input_map){
 
     cat("\nProcessing:", names(input_map), "\n",
         "Aggregation factor:", aggregation_factor, "\n")
@@ -99,8 +99,17 @@ gen_fract_lu_matrices <- function(country,
 
     names(input_maps_frac) <- lu_classes
 
+    return(input_maps_frac)
+
+  }
+
+  lu_frac_grids_list <- lapply(X = lu_raster_stack,
+                                  FUN = convert_cat_grid_into_fractional_grid)
+
+  convert_map_into_fractional_lu_matrix <- function(input_map_frac){
+
     lu_frac_matrix <- matrix(data = terra::values(input_maps_frac),
-                             ncol = length(unique_vals))
+                             ncol = length(names(input_maps_frac)))
 
     lu_frac_matrix[is.na(lu_frac_matrix)] <- 0
 
@@ -108,16 +117,12 @@ gen_fract_lu_matrices <- function(country,
 
       cat("\nRecaling all cells to ensure the fractions sum up to 1\n")
 
-      setwd(dir_output_files)
-      dir.create("raw_lu_files_by_country", showWarnings = F)
-      setwd(file.path(dir_output_files, "raw_lu_files_by_country"))
-      dir.create(country, showWarnings = F)
-      setwd(file.path(getwd(), country))
+      specify_output_dir(dir_output_files = dir_output_files,
+                         aoi = country,
+                         aggregation_factor = aggregation_factor)
 
-      #filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
       filenames_cropped_lu_maps = intersect(list.files(pattern = "cropped_lu_map"),
                                             list.files(pattern = ".tif$"))
-
 
       if(!is.null(cut_off_year)){
 
@@ -171,9 +176,10 @@ gen_fract_lu_matrices <- function(country,
 
     return(lu_frac_matrix)
 
+
   }
 
-  lu_frac_matrices_list <- lapply(X = lu_raster_stack,
+  lu_frac_matrices_list <- lapply(X = lu_frac_grids_list,
                                   FUN = convert_map_into_fractional_lu_matrix)
 
   lu_classes <- identify_lu_classes(lu_frac_matrices_list = lu_frac_matrices_list)

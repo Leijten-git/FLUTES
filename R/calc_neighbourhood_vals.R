@@ -18,7 +18,9 @@ calc_neighbourhood_vals <- function(index,
                                     enr = T,
                                     suffix = NULL){
 
-  cat("\nNow calculating the neighbourhood weights for year:", names(lu_list)[[index]], "\n")
+  cat("\nNow calculating the neighbourhood weights for year:",
+      names(lu_list)[[index]],
+      "\n")
 
   lu <- lu_list[[index]]
 

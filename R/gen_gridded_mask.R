@@ -1,8 +1,12 @@
 #' Extract the indices of a gridded mask for the area of interest
 #' @import dplyr
+#'
 #' @param country
 #' @param paths_lu_filenames
 #' @param dir_output_files
+#' @param cut_off_year
+#' @param years
+#' @param aggregation_factor
 #'
 #' @return
 #' @export
@@ -11,6 +15,7 @@
 gen_gridded_mask <- function(country,
                              cut_off_year,
                              years,
+                             aggregation_factor,
                              paths_lu_filenames,
                              dir_output_files){
 
@@ -18,7 +23,13 @@ gen_gridded_mask <- function(country,
 
   cat("\nGenerating a mask for:", country_name, "\n")
 
-  filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
+  specify_output_dir(dir_output_files = dir_output_files,
+                     aoi = country,
+                     aggregation_factor = aggregation_factor)
+
+  #filenames_cropped_lu_maps <- list.files(pattern="cropped_lu_map")
+  filenames_cropped_lu_maps = intersect(list.files(pattern = "cropped_lu_map"),
+                                        list.files(pattern = ".tif$"))
 
   if(!is.null(cut_off_year)){
     filename_ind_first_cropped_lu_map <- grep(as.character(cut_off_year),
