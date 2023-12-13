@@ -6,7 +6,6 @@
 \usage{
 extract_lu_requirements(
   lu_frac_matrices_list,
-  lu_classes,
   years,
   path = paste0(getwd(), "/land_use_requirements.Rds")
 )

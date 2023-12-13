@@ -4,10 +4,17 @@
 \alias{gen_gridded_mask}
 \title{Extract the indices of a gridded mask for the area of interest}
 \usage{
-gen_gridded_mask(country, paths_lu_filenames, dir_output_files)
+gen_gridded_mask(
+  country,
+  cut_off_year,
+  years,
+  aggregation_factor,
+  paths_lu_filenames,
+  dir_output_files
+)
 }
 \arguments{
-\item{dir_output_files}{}
+\item{aggregation_factor}{}
 }
 \description{
 Extract the indices of a gridded mask for the area of interest

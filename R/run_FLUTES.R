@@ -12,7 +12,7 @@ run_FLUTES <- function(.country,
                        .path_lu_legend_filename,
 
                        .cut_off_year = NULL,
-                       .lags = NULL,
+                       .lags = c(1),
                        .growth_constraint = NULL,
 
                        .max_dev = 2,
@@ -126,10 +126,47 @@ run_FLUTES <- function(.country,
                                      lu_first_period = lu_frac_matrices_list[[index]],
                                      default_dev_par = .max_dev)
 
+  perc_filled_cells_by_lu_type <- calc_growth_pars_empty_cells(lu_matrices = lu_frac_matrices_list,
+                                                               years = .years,
+                                                               cut_off_year = .cut_off_year)
+
+  if(is.character(.growth_constraint)){
+
+    if(.growth_constraint == "cal"){
+      cat("\nAutomatically calculating growth parameters\n")
+      growth_pars = perc_filled_cells_by_lu_type
+    }
+
+    else {
+      stop("`.growth_constraint` incorrectly specified. Only acceptable argument for characters is 'cal'")
+    }
+
+  } else if(is.numeric(.growth_constraint)&
+            length(.growth_constraint)==length(lu_classes)){
+
+    growth_pars = .growth_constraint
+
+  } else if(is.numeric(.growth_constraint)&
+            length(.growth_constraint)==1){
+
+    growth = rep(.growth_constraint, length(lu_classes))
+
+  } else if(is.null(.growth_constraint)){
+
+    cat("\nAutomatically calculating growth parameters\n")
+
+    growth = perc_filled_cells_by_lu_type
+
+  } else {
+
+    stop("`.growth_constraint` incorrectly specified")
+
+  }
+
   params = list(is_abs_dev = .is_abs_dev,
                 max_devs = max_devs,
                 max_iter = .max_iter,
-                growth = rep(.growth_constraint, ncol(lu_frac_matrices_list[[1]])),
+                growth = growth,
                 no_change = NULL)
 
   dir_model_output <- specify_output_dir(dir_output_files = .dir_output_files,

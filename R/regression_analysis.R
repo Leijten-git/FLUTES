@@ -178,17 +178,15 @@ regression_analysis <- function(lu_matrices,
                 "predictor variables for land use class:\n", lu_class, ".\n",
                 "Instead, a linear intercept-only model has been estimated. ",
                 "Note that this results in a r-squared of 0.\n",
-                "Consider changing the minimum threshold values.",
-                "\nCurrent settings:\n",
+                "Consider changing the minimum threshold values, currently set to:\n",
                 "Minimum number of pixels: ", min_n_pixels3, "\n",
                 "Average fraction: ", mean_populated_area, "\n")
 
-        warning("There are not enough non-empty pixels to estimate a model with",
+        warning("There are not enough non-empty pixels to estimate a model with ",
                 "predictor variables for land use class:\n", lu_class, ".\n",
                 "Instead, a linear intercept-only model has been estimated. ",
                 "Note that this results in a r-squared of 0.\n",
-                "Consider changing the minimum threshold values.",
-                "\nCurrent settings:\n",
+                "Consider changing the minimum threshold values, currently set to:\n",
                 "Minimum number of pixels: ", min_n_pixels3, "\n",
                 "Average fraction: ", mean_populated_area, "\n\n")
 

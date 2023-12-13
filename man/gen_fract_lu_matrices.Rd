@@ -7,12 +7,16 @@
 gen_fract_lu_matrices(
   country,
   years,
+  cut_off_year,
   aggregation_factor,
   dir_output_files,
   path_lu_legend_filename,
   vals_lu_classes_to_exclude = NULL,
-  no_unfilled_cells = F
+  no_unfilled_cells = T
 )
+}
+\arguments{
+\item{no_unfilled_cells}{}
 }
 \description{
 Generate fractional land use matrices over time based on the cropped land cover maps

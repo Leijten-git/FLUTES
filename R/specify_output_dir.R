@@ -45,6 +45,11 @@ specify_output_dir <- function(dir_output_files,
       growth_folder_name <- paste0("growth_", growth_par)
       dir.create(growth_folder_name, showWarnings = F)
       setwd(file.path(cwd, growth_folder_name))
+    } else if(is.null(growth_par)){
+      cwd <- getwd()
+      growth_folder_name <- "automatic_growth_pars"
+      dir.create(growth_folder_name, showWarnings = F)
+      setwd(file.path(cwd, growth_folder_name))
     }
 
     if(!is.null(are_PAs_excluded)){

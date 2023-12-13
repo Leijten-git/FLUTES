@@ -53,6 +53,8 @@ lu_allocation <- function(lu,
 
   cat("Maximum deviation tolerance thresholds:", max_devs)
 
+  cat("\nGrowth parameters:", growth)
+
   supply_t0 <- colSums(lu) # FL: count area by lu class in the initial situation
 
   demand_t1 <- dmd[2,] # FL: extract required areas next sim period

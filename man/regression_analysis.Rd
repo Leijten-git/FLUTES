@@ -6,8 +6,8 @@
 \usage{
 regression_analysis(
   lu_matrices,
-  lu_classes,
   neigh_values,
+  lu_classes,
   lags,
   cut_off_year = NULL,
   min_n_pixels1 = 700,
@@ -15,9 +15,12 @@ regression_analysis(
   min_n_pixels3 = 50,
   min_area1 = 500,
   min_area2 = 250,
-  min_area3 = 150,
+  min_area3 = 10,
   cut_off_val_var = 5e-07
 )
+}
+\arguments{
+\item{lu_classes}{}
 }
 \description{
 Title

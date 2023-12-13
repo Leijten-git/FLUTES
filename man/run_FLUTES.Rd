@@ -12,12 +12,14 @@ run_FLUTES(
   .aggregation_factor,
   .path_lu_legend_filename,
   .cut_off_year = NULL,
-  .lags = NULL,
+  .lags = c(1),
   .growth_constraint = NULL,
-  .max_dev = 5,
-  .max_iter = 2000,
+  .max_dev = 2,
+  .max_iter = 5000,
   .vals_lu_classes_to_exclude = NULL,
-  .kernel_size = 25
+  .kernel_size = 25,
+  .is_abs_dev = F,
+  skip_preprocessing = F
 )
 }
 \description{

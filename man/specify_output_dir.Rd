@@ -4,7 +4,15 @@
 \alias{specify_output_dir}
 \title{Specify the output directory}
 \usage{
-specify_output_dir(dir_output_files, aoi, aggregation_factor)
+specify_output_dir(
+  dir_output_files,
+  aoi,
+  aggregation_factor,
+  create_sub_folder = F,
+  are_conv_pars_perc = NULL,
+  growth_par = NULL,
+  are_PAs_excluded = NULL
+)
 }
 \arguments{
 \item{aggregation_factor}{}

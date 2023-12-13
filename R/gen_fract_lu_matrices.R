@@ -174,7 +174,7 @@ gen_fract_lu_matrices <- function(country,
 
     }
 
-    colnames(lu_frac_matrix) <- paste0(year, "_", names(input_maps_frac))
+    colnames(lu_frac_matrix) <- paste0(year, "_", names(input_map_frac))
 
     return(lu_frac_matrix)
 
