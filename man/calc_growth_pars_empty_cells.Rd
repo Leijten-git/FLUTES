@@ -4,7 +4,10 @@
 \alias{calc_growth_pars_empty_cells}
 \title{Calculate the average growth parameter within empty cells}
 \usage{
-calc_growth_pars_empty_cells()
+calc_growth_pars_empty_cells(lu_matrices, years, cut_off_year)
+}
+\arguments{
+\item{cut_off_year}{}
 }
 \description{
 Calculate the average growth parameter within empty cells

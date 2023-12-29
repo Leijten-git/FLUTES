@@ -17,11 +17,14 @@ gen_gridded_mask <- function(country,
                              years,
                              aggregation_factor,
                              paths_lu_filenames,
-                             dir_output_files){
+                             dir_output_files,
+                             show_message = T){
 
   country_name = country
 
-  cat("\nGenerating a mask for:", country_name, "\n")
+  if(show_message == T){
+    cat("\nGenerating a mask for:", country_name, "\n")
+  }
 
   specify_output_dir(dir_output_files = dir_output_files,
                      aoi = country,

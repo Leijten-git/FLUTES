@@ -219,8 +219,8 @@ run_FLUTES <- function(.country,
 
     } else {
 
-      cat("\nHurray! Outperforming the NULL model!\n\n")
-      warning("\nHurray! Outperforming the NULL model!\n\n")
+      cat("\nHurray! Outperforming the NULL model!\n")
+      warning("\nHurray! Outperforming the NULL model!\n")
 
     }
 
@@ -276,7 +276,8 @@ run_FLUTES <- function(.country,
                              years = .years,
                              aggregation_factor = .aggregation_factor,
                              paths_lu_filenames = .paths_lu_filenames,
-                             dir_output_files = .dir_output_files)
+                             dir_output_files = .dir_output_files,
+                             show_message = F)
 
     predicted_fractions <- fitted_vals_scaled[,lu_class]
     inds_mask <- which(!is.na(terra::values(mask)))
@@ -290,8 +291,6 @@ run_FLUTES <- function(.country,
 
     lu_class_filename <- paste0("Suit_", lu_class_name, ".tif")
     lu_class_filename <- gsub("_.", ".", lu_class_filename, fixed = TRUE)
-
-    #lu_class_filename_short <- substr(lu_class_filename, 1, 35)
 
     specify_output_dir(dir_output_files = .dir_output_files,
                        aoi = noquote(.country),
@@ -323,6 +322,8 @@ run_FLUTES <- function(.country,
                                          are_PAs_excluded = F)
 
   saveRDS(lambda_scores_df, "lambda_scores.Rds")
+
+  cat("\nRMSE scores:\n")
 
   return(RMSEs)
 

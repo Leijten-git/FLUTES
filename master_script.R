@@ -3,9 +3,9 @@ library(FLUTES)
 
 # user input --------------------------------------------------------------
 
-base_directory <- "" # path to software package
+base_directory <- "" # specify path to folder that contains the software package
 package_name <- "FLUTES" # specify packahe name
-dir_lu_filenames <- "" # path to filenames (raster files) with land use types
+dir_lu_filenames <- "" # path to filenames (raster files; should be in terra format) with land use types
 
 path_cloud <- "" # path to cloud folder
 base_dir <- paste0(path_cloud, "/") # path output dir
@@ -20,7 +20,6 @@ setwd(dir_lu_filenames)
 file_names <- list.files()[grepl("LCCS", list.files())]
 paths_lu_filenames <- paste0(getwd(), "/", file_names)
 years <- as.numeric(stringr::str_sub(sub('.*P1Y', '', paths_lu_filenames), 2, 5))
-
 
 # run FLUTES --------------------------------------------------------------
 

@@ -10,7 +10,8 @@ gen_gridded_mask(
   years,
   aggregation_factor,
   paths_lu_filenames,
-  dir_output_files
+  dir_output_files,
+  show_message = T
 )
 }
 \arguments{
